@@ -4,21 +4,22 @@
 #     Author: Shwan Wang
 #     Date: Mar. 19, 2021
 ##########################################
-if (!requireNamespace("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
-if (!require('topGO')) BiocManager::install('topGO',update = FALSE)
-if (!require('getopt')) install.packages('getopt')
+suppressMessages(if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager"))
+suppressMessages(if (!require('topGO')) BiocManager::install('topGO',update = FALSE))
+suppressMessages(if (!require('getopt')) install.packages('getopt'))
 options(stringsAsFactors = F)
-library(getopt)
-library(topGO)
+suppressMessages(library(getopt))
+suppressMessages(library(topGO))
 # args --------------------------------------------------------------------
 
 command=matrix(c(
   'help', 'h', 0, 'logic', 'help information',
   'background', 'b', 1, 'character', 'inputfile: background file, 1st column is GeneID, 2nd is collapsed GOID, Separated by commas',
   'querylist', 'q', 1, 'character', 'inputfile: Interested gene list, eg: DEGs.',
-  'ont', 'o', '1', 'integer', 'Ontology: "BP","MF","CC".',
-  'firstSigNodes', 'f', '1', 'integer', 'firstSigNodes: number of significant nodes (retangle nodes in the graph).'
+  'ont', 'o', '1', 'character', 'Ontology: "BP","MF","CC".',
+  'firstSigNodes', 'f', '1', 'integer', 'firstSigNodes: number of significant nodes (retangle nodes in the graph).',
+  'prefix', 'p', '1', 'character', 'fn.prefix: filename.'
 ),byrow = T, ncol = 5)
 args = getopt(command)
 
@@ -39,7 +40,7 @@ bg = args$background
 qlist = args$querylist
 ont = args$ont
 fSN = args$firstSigNodes
-
+prifix = args$prefix
 # Data cleaning -----------------------------------------------------------
 
 gene2go = readMappings(bg)
@@ -51,5 +52,8 @@ names(genelist) <- genenames
 
 GOdata <- new("topGOdata", allGenes = genelist, ontology = ont, 
               annot = annFUN.gene2GO, gene2GO = gene2go)
+resultFisher = runTest(GOdata,algorithm = "classic",statistic = "fisher")
+printGraph(GOdata, resultFisher, firstSigNodes = fSN, fn.prefix = prifix, useInfo = "all", pdfSW = TRUE)
 
-printGraph(GOdata, resultFisher, firstSigNodes = fSN, fn.prefix = "sampleFile", useInfo = "all", pdfSW = TRUE)
+
+
